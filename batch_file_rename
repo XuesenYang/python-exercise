@@ -1,0 +1,79 @@
+# -*- coding: UTF-8 -*-
+# 批量重命名 源码:https://github.com/geekcomputers/Python/blob/master/batch_file_rename.py
+"""
+This will batch rename a group of files in a given directory,
+once you pass the current and new extensions
+"""
+import os
+import argparse # argparse是python用于解析命令行参数和选项的标准模块
+
+def batch_rename(work_dir, old_ext, new_ext):
+    """
+    这将批量重命名给定目录中的一组文件
+    """
+    for filename in os.listdir(work_dir):
+        # 读取拓展名
+        split_file = os.path.splitext(filename)
+        # 整个文件切成两部分，第二部分是后缀，即是拓展名
+        file_ext = split_file[1]
+        if old_ext == file_ext: # 遇到那些后缀满足要求的，便替代，因为不是所有文件的后缀都是需要替代的
+            newfile = split_file[0]+new_ext
+            os.rename(os.path.join(work_dir, filename),os.path.join(work_dir, newfile)) # 重命名文件或者目录
+            # os.path.join 路径拼接
+
+def get_parser():
+    parser = argparse.ArgumentParser(description='change extension of files in a working directory') # 创建一个解析对象
+    parser.add_argument('work_dir', metavar='WORK_DIR', type=str, nargs=1,
+                        help='the directory where to change extension')
+    """
+    添加解释对象, 'work_dir' 是路径一定要有的, type 参数类型, nargs接受输入参数个数, help描述这个选项的作用, metavar用在help信息的输出中
+    用法: work_dir '/Users/yangxuesen/PycharmProjects/untitled2'
+    """
+    parser.add_argument('old_ext', metavar='OLD_EXT', type=str, nargs=1, help='old extension')
+    parser.add_argument('new_ext', metavar='NEW_EXT', type=str, nargs=1, help='new extension')
+    return parser
+
+def main():
+    # 添加命令行参数
+    parser = get_parser()
+    # vars() 函数返回对象object的属性和属性值的字典对象。
+    args = vars(parser.parse_args())
+    # 设置第一个对象, 路径work_dir
+    work_dir = args['work_dir'][0]
+    # 设置第二个对象, 旧文件后缀old_ext
+    old_ext = args['old_ext'][0]
+    # 旧文件名如果不带','  系统帮忙加上
+    if old_ext[0] != '.':
+        old_ext = '.' + old_ext
+    # 设置第三个对象, 新文件后缀new_ext
+    new_ext = args['new_ext'][0]
+    if old_ext[0] != '.':
+        old_ext = '.' + old_ext
+
+    batch_rename(work_dir, old_ext, new_ext)
+
+if __name__ == '__main__':
+    main()
+    """
+    <自己作为脚本被执行; 被其他脚本调用> if __name__ == 'main': 的作用就是控制这两种情况执行代码的过程
+    在if __name__ == 'main': 下的代码只有在第一种情况下（即文件作为脚本直接执行）才会被执行
+    而import到其他脚本中是不会被执行的。
+    通俗理解：自己执行的时候，main() 会被执行
+             别人调用batch_file_rename.py 的时候 main()不会被执行
+    """
+# 测试样例1－－－>脚本运行
+batch_rename('/Users/yangxuesen/Desktop/FS-system', '.png', '.jpg')
+# 测试样例2－－－>命令行／终端输入
+  """
+  python batch_file_rename.py /Users/yangxuesen/Desktop/FS-system .png .jpg
+  """
+
+
+
+
+
+
+
+
+
+
