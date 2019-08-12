@@ -1,0 +1,27 @@
+# -*- coding: UTF-8 -*-
+# 检查用户主目录中是否存在目录，如果不存在，则创建该目录  源码 https://github.com/geekcomputers/Python/blob/master/create_dir_if_not_there.py
+import os  # Import the OS module
+MESSAGE = 'The directory already exists.'
+TESTDIR = 'testdir'
+try:
+    home = os.path.expanduser("~")
+    # 把path中包含的"~"和"~user"转换成用户目录
+    """
+    os.path.abspath() 返回绝对路径
+    os.path.basename() 返回文件名
+    os.path.dirname() 返回文件路径
+    """
+    print(home)
+
+    if not os.path.exists(os.path.join(home, TESTDIR)):
+        os.makedirs(os.path.join(home, TESTDIR))
+
+    else:
+        print(MESSAGE)
+
+except Exception as e:
+    print(e)
+
+"""
+try/except语句用来检测try语句块中的错误，从而让except语句捕获异常信息并处理。
+"""
