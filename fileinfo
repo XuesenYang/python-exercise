@@ -1,0 +1,74 @@
+# -*- coding: UTF-8 -*-
+# coding: utf-8
+# 显示文件的信息 源码: https://github.com/geekcomputers/Python/blob/master/fileinfo.py
+# os模块包含普遍的操作系统功能
+import os
+import sys
+import stat
+import time
+
+# sys.version_info 在程序中查看python的版本
+if sys.version_info >= (3,0):
+    raw_input = input
+
+try_count = 16
+
+while try_count:
+    file_name = raw_input("选择一个文件的名字:") # 输入文件名
+    # 打开一个文件
+    fhand = open(file_name) #, encoding="unicode_escape"
+    count = 0
+    for lines in fhand:
+        count+=1
+        ## ????
+    fhand = open(file_name)
+    inp = fhand.read()
+    t_char = len(inp)
+    try_count >>= 1
+
+    try:
+        file_stats = os.stat(file_name)
+        print("文件状态")
+        break
+    except OSError:
+        print(print ("\nNameError : [%s] 不存在文件或者路径 \n", file_name))
+
+if try_count == 0:
+    print('超过试用限制 \n 退出程序')
+
+file_info = {'fname': file_name,
+             'fsize': file_stats[stat.ST_SIZE],
+             'f_lm': time.strftime("%d/%m/%Y %I:%M:%S %p", time.localtime(file_stats[stat.ST_MTIME])),
+             'f_la' : time.strftime("%d/%m/%Y %I:%M:%S %p", time.localtime(file_stats[stat.ST_ATIME])),
+             'f_ct' : time.strftime("%d/%m/%Y %I:%M:%S %p", time.localtime(file_stats[stat.ST_CTIME])),
+             'no_of_lines':count,
+             't_char':t_char}
+
+print ("\n文件名字 =", file_info['fname'])
+print ("文件大小 =", file_info['fsize'] , "bytes")
+print ("最近修改时间 =", file_info['f_lm'])
+print ("最近访问时间 =", file_info['f_la'])
+print ("文件创建时间 =", file_info['f_ct'])
+print ("内容行数 =", file_info['no_of_lines'])
+print ("文件信息个数 =", file_info['t_char'])
+
+# 判断是否是目录
+if stat.S_ISDIR(file_stats[stat.ST_MODE]):
+    print ("这是目录啊")
+else:
+    print("这不是目录鸭\n")
+    print("更详细的信息请看以下(%s) tuple:" % file_name)
+    print(file_stats)
+    print("\n 上面信息参数解释:   ")
+    print("""st_mode (保护位), st_ino (节点数), 
+        st_dev (device),    st_nlink (硬链接数),    
+        st_uid (用户ID),   st_gid (组ID),    
+        st_size (文件大小),  st_atime (上次访问时间),  
+        st_mtime (上次修改时间),   st_ctime (文件创建时间)""")
+
+"""
+测试样例1--->运行脚本，在窗口直接输入当前路径所在的目录里面的某个文件名, 例如 hhh.py
+测试样例2--->运行脚本，在窗口直接输入某个路径下的某个文件名, 例如 /Users/yangxuesen/Desktop/FS-system/hhh.py
+待解决问题: 打开一些文件例如jpg图片时出错
+"""
+
