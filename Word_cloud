@@ -1,3 +1,9 @@
+"""
+导入的图片是png格式
+图片的空白处才会填补词云
+"""
+
+
 from os import path
 from PIL import Image
 import numpy as np
