@@ -1,0 +1,182 @@
+#-*-coding:utf-8-*-
+# coding:utf-8
+import itchat
+import re
+import os
+import matplotlib as mpl
+from matplotlib import pyplot as plt
+import numpy as np
+import PIL.Image as Image
+from os import listdir
+import math
+import pandas as pd
+import  os
+from wordcloud import WordCloud, STOPWORDS
+import jieba as jieba
+import random
+
+
+# 由于需要用到微软雅黑字体所以下载, /Users/yangxuesen/Downloads/是我放的目录
+zhfont = mpl.font_manager.FontProperties(fname='/Users/yangxuesen/Downloads/msyh.ttf', size=14)
+
+# 第一次登陆需要微信扫码
+itchat.auto_login(hotReload=True)
+# 爬取好友的相关信息，返回json文件friends
+friends = itchat.get_friends(update=True)
+print(friends)
+
+# 性别分析, 输出饼图
+def friend_analysis(friends):
+    print('性别分析中---->')
+    label = ['male', 'female', 'other']
+    data = [0, 0, 0]
+
+    # friends[0] 是自己的信息
+    for friend in friends[1:]:
+        sex = friend["Sex"]
+        if sex == 1:
+            data[0] += 1
+        elif sex == 2:
+            data[1] += 1
+        else:
+            data[2] += 1
+
+    fig = plt.figure()
+    plt.pie(data, labels=label,autopct="%.2f%%")
+    plt.title("微信好友分析",fontsize=18,fontproperties=zhfont)
+    plt.show()
+
+friend_analysis(friends)
+
+# 提取好友信息:昵称,性别,省,市,签名
+def get_features(friends):
+    print('提取好友信息:昵称,性别,省市,签名中--->')
+    features = []
+    for friend in friends:
+        feature = {'NickName': friend['NickName'], 'Sex': friend['Sex'], 'City': friend['City'],
+                  'Province': friend['Province'], 'Signature': friend['Signature']}
+        features.append(feature)
+    return pd.DataFrame(features)
+
+features = get_features(friends[1:])
+print(features.columns)
+features.head()
+locations = features.loc[:, ['Province', 'City']]  # get location columns
+locations = locations[locations['Province'] != '']  # clean empty city or province records
+data = locations.groupby(['Province', 'City']).size().unstack()  # group by and count
+count_subset = data.take(data.sum(1).argsort())[-20:]  # obtain the 20 highest data
+
+
+# 打印省份直方分布图
+print('打印省份分布图')
+subset_plot = count_subset.plot(kind='bar', stacked=True, figsize=(24, 24))
+# set fonts
+xtick_labels = subset_plot.get_xticklabels()
+for label in xtick_labels:
+    label.set_fontproperties(zhfont)
+legend_labels = subset_plot.legend().texts
+for label in legend_labels:
+    label.set_fontproperties(zhfont)
+    label.set_fontsize(10)
+plt.xlabel('Province', fontsize=20)
+plt.ylabel('Number', fontsize=20)
+plt.show()
+
+
+# 分析好友签名
+def signature_analysis(friends):
+    print('分析好友签名')
+    signature_list = list()
+
+    for friend in friends[1:]:
+        signature = friend['Signature'].strip()
+        signature_list.append(signature)
+        print(friend['NickName'] + "\t" + signature)
+signature_analysis(friends)
+
+# 把签名放在txt文件里面
+def getSignature():
+    itchat.login()
+    friends = itchat.get_friends(update=True)
+    file = open('sign.txt', 'a', encoding='utf-8')
+    for f in friends:
+        signature = f["Signature"].strip().replace("emoji", "").replace("span", "").replace("class", "")
+        # 正则匹配
+        rec = re.compile("1f\d+\w*|[<>/=]")
+        signature = rec.sub("", signature)
+        file.write(signature + "\n")
+getSignature()
+
+
+# 生成词云
+def create_word_cloud(filename):
+    # 读取文件内容
+    text = open("{}.txt".format(filename), encoding='utf-8').read()
+    print("{}.txt".format(filename))
+
+    # 注释部分采用结巴分词
+    wordlist = jieba.cut(text, cut_all=True)
+    wl = " ".join(wordlist)
+
+    # 设置词云
+    wc = WordCloud(
+        # 设置背景颜色
+        background_color="white",
+        # 设置最大显示的词云数
+        max_words=2000,
+        # 这种字体都在电脑字体中，window在C:\Windows\Fonts\下，mac下可选/System/Library/Fonts/PingFang.ttc 字体
+        font_path='/Users/yangxuesen/Downloads/msyh.ttf',
+        height=500,
+        width=500,
+        # 设置字体最大值
+        max_font_size=60,
+        # 设置有多少种随机生成状态，即有多少种配色方案
+        random_state=30,
+    )
+
+    myword = wc.generate(wl)  # 生成词云 如果用结巴分词的话，使用wl 取代 text， 生成词云图
+    # 展示词云图
+    plt.imshow(myword)
+    plt.axis("off")
+    plt.show()
+    wc.to_file('signature.png')  # 把词云保存下
+create_word_cloud('sign')
+
+def headImg():
+    itchat.login()
+    friends = itchat.get_friends(update=True)
+    # itchat.get_head_img() 获取到头像二进制，并写入文件，保存每张头像
+    for count, f in enumerate(friends):
+        # 根据userName获取头像
+        img = itchat.get_head_img(userName=f["UserName"])
+        imgFile = open("img/" + str(count) + ".jpg", "wb")
+        imgFile.write(img)
+        imgFile.close()
+headImg()
+
+def createImg():
+    x = 0
+    y = 0
+    imgs = os.listdir("img")
+    random.shuffle(imgs)
+    # 创建640*640的图片用于填充各小图片
+    newImg = Image.new('RGBA', (640, 640))
+    # 以640*640来拼接图片，math.sqrt()开平方根计算每张小图片的宽高，
+    width = int(math.sqrt(640 * 640 / len(imgs)))
+    # 每行图片数
+    numLine = int(640 / width)
+
+    for i in imgs:
+        img = Image.open("img/" + i)
+        # 缩小图片
+        img = img.resize((width, width), Image.ANTIALIAS)
+        # 拼接图片，一行排满，换行拼接
+        newImg.paste(img, (x * width, y * width))
+        x += 1
+        if x >= numLine:
+            x = 0
+            y += 1
+
+    newImg.save("all.png")
+createImg()
+
