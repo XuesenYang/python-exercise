@@ -142,41 +142,41 @@ def create_word_cloud(filename):
     wc.to_file('signature.png')  # 把词云保存下
 create_word_cloud('sign')
 
-def headImg():
-    itchat.login()
-    friends = itchat.get_friends(update=True)
-    # itchat.get_head_img() 获取到头像二进制，并写入文件，保存每张头像
-    for count, f in enumerate(friends):
-        # 根据userName获取头像
-        img = itchat.get_head_img(userName=f["UserName"])
-        imgFile = open("img/" + str(count) + ".jpg", "wb")
-        imgFile.write(img)
-        imgFile.close()
-headImg()
-
-def createImg():
+def getImage(friends):
+    #下载所有好友的头像图片
+    num = 0
+    for i in friends:
+        img = itchat.get_head_img(i["UserName"])
+        with open('./headImg/' + str(num) + ".png",'wb') as f:
+            f.write(img)
+            f.close()
+            num += 1
+    #获取文件夹内的文件个数
+    length = len(os.listdir('./headImg'))
+    #根据总面积求每一个的大小
+    each_size = int(math.sqrt(float(810*810)/length))
+    #每一行可以放多少个
+    lines = int(810/each_size)
+    #生成白色背景新图片
+    image = Image.new('RGBA', (810, 810),'white')
     x = 0
     y = 0
-    imgs = os.listdir("img")
-    random.shuffle(imgs)
-    # 创建640*640的图片用于填充各小图片
-    newImg = Image.new('RGBA', (640, 640))
-    # 以640*640来拼接图片，math.sqrt()开平方根计算每张小图片的宽高，
-    width = int(math.sqrt(640 * 640 / len(imgs)))
-    # 每行图片数
-    numLine = int(640 / width)
+    for i in range(0,length):
+        try:
+            img = Image.open('./headImg/' + str(i) + ".png")
+        except IOError:
+            print(i)
+            print("Error")
+        else:
+            img = img.resize((each_size, each_size), Image.ANTIALIAS) #resize image with high-quality
+            image.paste(img, (x * each_size, y * each_size))
+            x += 1
+            if x == lines:
+                x = 0
+                y += 1
+    image.save('./headImg/' + "all.png")
+    #通过文件传输助手发送到自己微信中
+    itchat.send_image('./headImg/' + "all.png",'filehelper')
+    image.show()
 
-    for i in imgs:
-        img = Image.open("img/" + i)
-        # 缩小图片
-        img = img.resize((width, width), Image.ANTIALIAS)
-        # 拼接图片，一行排满，换行拼接
-        newImg.paste(img, (x * width, y * width))
-        x += 1
-        if x >= numLine:
-            x = 0
-            y += 1
-
-    newImg.save("all.png")
-createImg()
-
+getImage(friends)
