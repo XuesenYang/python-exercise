@@ -9,6 +9,7 @@ from sklearn.svm import SVR
 from scipy.optimize import fsolve
 from pandas.plotting import register_matplotlib_converters
 
+# 气象数据: http://labfile.oss.aliyuncs.com/courses/780/WeatherData.zip
 path = '/Users/yangxuesen/PycharmProjects/untitled2/mechine_learning/WeatherData/'
 df_ferrara = pd.read_csv(path + 'ferrara_270615.csv')
 df_milano = pd.read_csv(path + 'milano_270615.csv')
